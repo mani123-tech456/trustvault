@@ -1,36 +1,45 @@
 # TrustVault
 
-TrustVault is a self-hostable document-sharing prototype. The server checks document ownership or a current named-user grant on each request. Files are encrypted at rest with AES-256-GCM; audit events form an HMAC chain. The browser interface is served from the same origin at /.
+TrustVault is a self-hostable document-sharing prototype. The server checks document ownership or a current named-user grant on each request. Files are encrypted at rest with AES-256-GCM; audit events form an HMAC chain. The browser interface is served from the same origin at `/`.
 
 ## Run locally
 
-Python 3.11+: create a virtual environment, install requirements.txt, then run python app.py. Open http://localhost:8000. Docker users can run docker compose up --build -d. See API.md for endpoint permissions and request examples.
+Python 3.11+ from a clean clone:
+
+```powershell
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python app.py
+```
+
+Open `http://localhost:8000`. With Docker, run `docker compose up --build -d`. See [API.md](API.md) for endpoint permissions and request examples.
 
 ## Demo accounts
 
 | Role | Username | Password |
 |---|---|---|
-| Administrator | admin | Admin-demo-7qP! |
-| Document owner | owner | Owner-demo-8rK! |
-| Viewer | viewer | Viewer-demo-9sM! |
-| Isolation test viewer | other | Other-demo-4wN! |
+| Administrator | `admin` | `Admin-demo-7qP!` |
+| Document owner | `owner` | `Owner-demo-8rK!` |
+| Viewer | `viewer` | `Viewer-demo-9sM!` |
+| Isolation test viewer | `other` | `Other-demo-4wN!` |
 
 These are public demo-only credentials. Never reuse them.
 
 ## Roles and permission model
 
-- Administrator: audit/activity feed and chain verification only; no implicit document access.
-- Owner: manage owned documents and grant or revoke named users read/edit access.
-- Viewer: access documents only through a current grant. Read permits metadata and download; edit also permits metadata changes and replacement.
+- **Administrator:** audit/activity feed and chain verification only; no implicit document access.
+- **Owner:** manage owned documents and grant or revoke named users read/edit access.
+- **Viewer:** access documents only through a current grant. Read permits metadata and download; edit also permits metadata changes and replacement.
 
 There is no folder inheritance, signed download URL, or cached authorization decision. Revocation takes effect on the next request.
 
 ## Verification and known gaps
 
-Run python -m unittest -v. Tests cover unauthorized direct routes, revocation, role boundaries, and audit tamper detection. THREATS.md describes accepted risks. This is a prototype, not ready for sensitive production documents. MFA/SSO, malware scanning, version history, account administration, rate limiting, independent security review, and external audit anchoring are unfinished.
+Run `python -m unittest -v`. Tests cover unauthorized direct routes, revocation, role boundaries, and audit tamper detection. [THREATS.md](THREATS.md) describes accepted risks. This is a prototype, not ready for sensitive production documents. MFA/SSO, malware scanning, version history, account administration, rate limiting, independent security review, and external audit anchoring are unfinished.
 
-No live service was created: Render persistent storage requires paid compute, which the user declined. render.yaml is provided for a future deployment. DEMO.md is a five-minute recording outline; a demo video has not been recorded.
+No live service was created: Render persistent storage requires paid compute, which the user declined. `render.yaml` is provided for a future deployment. [DEMO.md](DEMO.md) is a five-minute recording outline; a demo video has not been recorded.
 
 ## AI work log
 
-See PROMPTS.md for prompt/review notes and where AI output was corrected.
+See [PROMPTS.md](PROMPTS.md) for prompt/review notes and where AI output was corrected.
