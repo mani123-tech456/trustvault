@@ -1,0 +1,15 @@
+services:
+  trustvault:
+    build: .
+    ports:
+      - "8000:10000"
+    environment:
+      TRUSTVAULT_HOST: 0.0.0.0
+      TRUSTVAULT_DATA: /var/lib/trustvault
+      PORT: 10000
+    volumes:
+      - trustvault-data:/var/lib/trustvault
+    restart: unless-stopped
+
+volumes:
+  trustvault-data:

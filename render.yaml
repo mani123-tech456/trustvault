@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: trustvault
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    disk:
+      name: trustvault-data
+      mountPath: /var/lib/trustvault
+      sizeGB: 1
+    envVars:
+      - key: TRUSTVAULT_HOST
+        value: 0.0.0.0
+      - key: TRUSTVAULT_DATA
+        value: /var/lib/trustvault
+      - key: PORT
+        value: 10000
+      - key: TRUSTVAULT_ENCRYPTION_KEY
+        generateValue: true
+      - key: TRUSTVAULT_AUDIT_KEY
+        generateValue: true
