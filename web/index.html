@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TrustVault</title><link rel="stylesheet" href="/style.css"><script defer src="/ui.js"></script>
+</head>
+<body>
+  <header><div><p class="eyebrow">PRIVATE DOCUMENT SHARING</p><h1>TrustVault</h1></div><div id="identity" hidden></div></header>
+  <main>
+    <section id="login" class="panel narrow">
+      <h2>Sign in</h2><p class="muted">Access is checked for each document request.</p>
+      <form id="loginForm"><label>Username<input name="username" autocomplete="username" required></label><label>Password<input type="password" name="password" autocomplete="current-password" required></label><button>Sign in</button></form>
+    </section>
+    <div id="workspace" hidden>
+      <section class="panel toolbar"><div><h2>Your documents</h2><p class="muted">Only documents you own or were granted appear here.</p></div><button id="logout" class="secondary">Sign out</button></section>
+      <section id="uploadPanel" class="panel" hidden><h3>Upload document</h3><form id="uploadForm" class="inline"><label>File<input name="file" type="file" required></label><label>Category<input name="category" maxlength="80" value="uncategorized"></label><button>Upload</button></form></section>
+      <section class="panel"><form id="searchForm" class="filters"><label>Name<input name="name"></label><label>Owner<input name="owner"></label><label>Category<input name="category"></label><label>From<input name="from" type="date"></label><label>To<input name="to" type="date"></label><button>Search</button></form><div id="documents" class="documents"></div></section>
+      <section id="adminPanel" class="panel" hidden><div class="toolbar"><div><h3>Activity log</h3><p class="muted">Access decisions and permission changes.</p></div><button id="verify" class="secondary">Verify audit chain</button></div><pre id="audit"></pre></section>
+    </div>
+    <div id="notice" role="status" aria-live="polite"></div>
+  </main>
+</body>
+</html>
