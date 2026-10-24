@@ -34,11 +34,15 @@ These are public demo-only credentials. Never reuse them.
 
 There is no folder inheritance, signed download URL, or cached authorization decision. Revocation takes effect on the next request.
 
+## Live demo
+
+Open [TrustVault on Render](https://trustvault-fodr.onrender.com). Use the demo accounts above. The service runs on Render's free tier and sleeps after inactivity, so its first request can take about a minute. Its filesystem is temporary: uploaded files and database changes can disappear when the service restarts, spins down or redeploys. This is a disposable judging demo only; do not upload real confidential documents.
+
 ## Verification and known gaps
 
 Run `python -m unittest -v`. Tests cover unauthorized direct routes, revocation, role boundaries, and audit tamper detection. [THREATS.md](THREATS.md) describes accepted risks. This is a prototype, not ready for sensitive production documents. MFA/SSO, malware scanning, version history, account administration, rate limiting, independent security review, and external audit anchoring are unfinished.
 
-No live service was created: Render persistent storage requires paid compute, which the user declined. `render.yaml` is provided for a future deployment. [DEMO.md](DEMO.md) is a five-minute recording outline; a demo video has not been recorded.
+The `render.yaml` Blueprint uses the free plan and no persistent disk. [DEMO.md](DEMO.md) is a five-minute recording outline.
 
 ## AI work log
 
