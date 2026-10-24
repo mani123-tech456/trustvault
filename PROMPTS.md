@@ -41,3 +41,11 @@ This log records work done on 2026-10-21. This was not a week-long build, and th
 
 - The full TrustVault challenge brief supplied by the user was the build specification throughout this work.
 - No additional project prompt file or repository instruction file was reused.
+
+
+## 2026-10-24 — Diagnose and deploy the public Render demo
+
+- **Prompt asked:** The user asked for a live public website using the existing GitHub repository, with the earlier no-cost preference still in force.
+- **Produced:** Render already had a free Python service linked to the public repository, but its first deployment failed. Inspecting its settings showed that the root directory was `web/` and the start command was the generic `gunicorn your_application.wsgi`. After changing the root to the repository root, setting `python app.py`, and adding `TRUSTVAULT_HOST=0.0.0.0`, Render reported a live deployment and the sign-in page loaded at [the demo URL](https://trustvault-fodr.onrender.com).
+- **What was wrong / review finding:** I initially misread a partial GitHub file listing and told the user required source files were missing. A direct check of `requirements.txt` proved that claim wrong. The actual build failure was the incorrect Render root directory; the app also defaulted to localhost, so fixing only the build would still leave the service unreachable. The free service has ephemeral storage and sleeps when idle, so it is only a disposable demo.
+- **What changed / checked:** Reset the Render root directory, corrected its start command and host binding, then verified Render marked the service `Live` and the public URL showed the sign-in page. Published the free/no-disk Blueprint in [commit 1f51f90](https://github.com/mani123-tech456/trustvault/commit/1f51f903cc9327212f78923da91829c40c1f7586) and the live demo/hosting limitations in [commit d9d8930](https://github.com/mani123-tech456/trustvault/commit/d9d893055c195d6cf9c975d301fa303f5e505175). The active Python service uses its dashboard settings; these repository edits describe future Blueprint deploys.
