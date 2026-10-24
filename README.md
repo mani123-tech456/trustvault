@@ -34,6 +34,8 @@ These are public demo-only credentials. Never reuse them.
 
 There is no folder inheritance, signed download URL, or cached authorization decision. Revocation takes effect on the next request.
 
+Every signed-in user can change their own password from the workspace. The endpoint requires the current password, applies a 12–256 byte new-password limit, records success or denial without storing password values in the audit, and revokes all of that user's active sessions. Sign in again after changing it.
+
 ## Live demo
 
 Open [TrustVault on Render](https://trustvault-fodr.onrender.com). Use the demo accounts above. The service runs on Render's free tier and sleeps after inactivity, so its first request can take about a minute. Its filesystem is temporary: uploaded files and database changes can disappear when the service restarts, spins down or redeploys. This is a disposable judging demo only; do not upload real confidential documents.

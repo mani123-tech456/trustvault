@@ -17,6 +17,7 @@ This is a local prototype, not a security certification. The protected asset is 
 | Audit row edited or reordered silently | HMAC-linked records cover timestamp, actor, action, document, target, result, detail and prior digest. Admin verifier detects edits/reordering while key remains protected. | `test_admin_audit_contains_refused_attempt_and_chain_verifies` |
 | Denied access leaves no evidence | Invalid/missing credentials on document paths and authenticated failed authorization are written as denied events, with anonymous actor for no identity. Login failures are also recorded. | `test_admin_has_no_implicit_document_access_and_anonymous_attempt_is_recorded` |
 | CSRF or cross-origin browser action | Mutations require a per-session CSRF header; if Origin is present, its host must match request Host. No cookie-based ambient credentials are used. | `test_validation_and_csrf` |
+| Attacker with a valid session changes another user's password or keeps using the old session after a change | Password change requires the current account's password, is CSRF protected, stores only a fresh salted scrypt hash, audits outcomes without secrets, and deletes all sessions for that user in the same transaction. | `test_password_change_checks_current_password_and_revokes_every_session` |
 | SQL injection through filters | Values and identifiers are parameterized; query columns/operators come from fixed code, not request data. | Inspection; no dedicated injection test yet. |
 
 ## Permission model
@@ -29,13 +30,13 @@ Audit writes share a SQLite transaction with the relevant metadata/grant mutatio
 
 ## Accepted risks and unfinished controls
 
-- The shipped demo passwords are public and accounts have no lockout, MFA, SSO, password reset, or account-disable UI. Do not expose the demo seed on the internet.
+- The shipped demo passwords are public and accounts have no lockout, MFA, SSO, password reset, or account-disable UI. Self-service password change does not protect the publicly shared demo accounts from other people who know the current password. Do not expose the demo seed on the internet.
 - The bearer token is returned to the caller; a stolen token works until logout/expiry. There is no refresh rotation, device/session page, or token binding.
 - SQLite and a local object directory assume one trusted host/one process. Production needs hardened hosting, TLS, a separate DB/object store, backup/restore tests, and coordinated key management.
 - No antivirus, macro inspection, MIME sniffing, ZIP/decompression limits, content disarm, or document preview isolation exists. Allowlisted suffixes alone do not establish file safety.
 - Audit rows do not capture source IP/user agent, and logging does not cover malformed JSON/validation failures consistently. The users directory is visible to any logged-in account. Rate limits and alerting are absent.
 - Soft-deleted content remains encrypted on disk indefinitely; retention, purge, legal hold, and recovery policies are unspecified.
-- No public deployment, TLS endpoint, seeded non-demo account set, independent pentest, or web UI has been produced in this workspace.
+- The public Render free demo has ephemeral storage; it may lose database state and uploaded encrypted files on restart, idle spin-down, or redeploy. It is not appropriate for confidential documents. No independently reviewed production deployment or non-demo account provisioning exists.
 
 ## Tests still needed
 

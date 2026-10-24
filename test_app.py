@@ -98,6 +98,29 @@ class TrustVaultTests(unittest.TestCase):
         self.call("POST","/api/documents",raw=b"bad",headers={"Authorization":"Bearer "+self.tokens["owner"]["token"],"X-File-Name":"payload.txt","X-CSRF-Token":"wrong"},expected=401)
         self.call("GET","/api/users",who="viewer",expected=403)
 
+    def test_password_change_checks_current_password_and_revokes_every_session(self):
+        con=app.db();row=con.execute("SELECT id,salt,password_hash FROM users WHERE username='other'").fetchone()
+        original_salt,original_hash=row["salt"],row["password_hash"];con.close()
+        old_session=self.tokens["other"].copy()
+        try:
+            self.call("POST","/api/password",{"current_password":"wrong","new_password":"a-strong-new-password"},who="other",expected=400)
+            self.call("POST","/api/password",{"current_password":"Other-demo-4wN!","new_password":"short"},who="other",expected=400)
+            self.call("POST","/api/password",{"current_password":"Other-demo-4wN!","new_password":"a-strong-new-password"},who="other",expected=200)
+            self.call("GET","/api/me",headers={"Authorization":"Bearer "+old_session["token"]},auth=False,expected=401)
+            self.call("POST","/api/login",{"username":"other","password":"Other-demo-4wN!"},auth=False,expected=401)
+            signed_in=self.call("POST","/api/login",{"username":"other","password":"a-strong-new-password"},auth=False,expected=200)
+            self.tokens["other"]={"id":signed_in["user"]["id"],"token":signed_in["token"],"csrf":signed_in["csrf"]}
+            events=self.call("GET","/api/admin/activity",who="admin")
+            changes=[e for e in events if e["action"]=="password_change"]
+            self.assertTrue(any(e["outcome"]=="denied" for e in changes))
+            self.assertTrue(any(e["outcome"]=="allowed" for e in changes))
+            self.assertTrue(self.call("GET","/api/admin/audit/verify",who="admin")["valid"])
+        finally:
+            # Keep the shared test fixture deterministic while retaining a valid token.
+            con=app.db();con.execute("UPDATE users SET salt=?,password_hash=? WHERE id=?",(original_salt,original_hash,row["id"]));con.commit();con.close()
+            if self.tokens["other"].get("token")==old_session["token"]:
+                self.login("other","Other-demo-4wN!")
+
     def test_admin_audit_contains_refused_attempt_and_chain_verifies(self):
         doc=self.upload();self.call("GET",f"/api/documents/{doc}",who="other",expected=404)
         rows=self.call("GET","/api/admin/activity",who="admin")

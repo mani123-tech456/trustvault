@@ -8,6 +8,7 @@ All paths use JSON unless the endpoint accepts or returns raw document bytes. Lo
 | `POST /api/login` | Public | JSON `{ "username": "…", "password": "…" }`; returns token, CSRF token, role and user ID. Failed login is audited. |
 | `POST /api/logout` | Any authenticated user + CSRF | Revokes the current bearer session. |
 | `GET /api/me` | Any authenticated user | Current account identity and role. |
+| `POST /api/password` | Any authenticated user + CSRF | JSON `{ "current_password": "…", "new_password": "…" }`; requires the current password and a new password of 12–256 UTF-8 bytes. Changes the hash, audits the result without recording secrets, and revokes every active session for that account. Sign in again afterward. |
 | `GET /api/users` | Owner | Active user IDs, names and roles for explicit sharing. |
 | `GET /api/documents?name=&owner=&category=&from=YYYY-MM-DD&to=YYYY-MM-DD` | Any authenticated user | Current user's owned and explicitly granted documents only; max 200. Search terms are parameterized and `%`/`_` are escaped. |
 | `POST /api/documents` | Owner role + CSRF | Raw file bytes; `X-File-Name` and optional `X-Category`; up to 10 MiB. Creates owner-only document. |

@@ -231,6 +231,21 @@ class Handler(BaseHTTPRequestHandler):
                 if not user: return self.send_json(401,{"error":"unauthorized"})
                 if path == "/api/me" and self.command == "GET":
                     return self.send_json(200,{"id":user["id"],"username":user["username"],"role":user["role"]})
+                if path == "/api/password" and self.command == "POST":
+                    data=self.json_body()
+                    current=data.get("current_password")
+                    new=data.get("new_password")
+                    valid_types=isinstance(current,str) and isinstance(new,str)
+                    valid_size=valid_types and len(current.encode("utf-8"))<=256 and 12<=len(new.encode("utf-8"))<=256
+                    matches=valid_types and len(current.encode("utf-8"))<=256 and hmac.compare_digest(password_hash(current,user["salt"]),user["password_hash"])
+                    if not matches or not valid_size:
+                        audit(con,user["id"],"password_change",None,None,"denied","incorrect current password or new password outside 12-256 byte policy")
+                        con.commit();return self.send_json(400,{"error":"current password incorrect or new password must be 12-256 bytes"})
+                    salt=secrets.token_bytes(16)
+                    con.execute("UPDATE users SET salt=?,password_hash=? WHERE id=?",(salt,password_hash(new,salt),user["id"]))
+                    con.execute("DELETE FROM sessions WHERE user_id=?",(user["id"],))
+                    audit(con,user["id"],"password_change",None,None,"allowed","password changed; all sessions revoked")
+                    con.commit();return self.send_json(200,{"ok":True,"reauthentication_required":True})
                 if path == "/api/users" and self.command == "GET":
                     if user["role"]!="owner": return self.deny(con,user,"user_directory",None,"owner role required",403)
                     rows=con.execute("SELECT id,username,role FROM users WHERE active=1 ORDER BY username").fetchall()
