@@ -1,28 +1,156 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TrustVault</title><link rel="stylesheet" href="/style.css"><script defer src="/ui.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7fa">
+  <meta name="description" content="TrustVault secure document workspace">
+  <title>TrustVault | Secure workspace</title>
+  <link rel="stylesheet" href="/style.css">
+  <script defer src="/ui.js"></script>
 </head>
 <body>
-  <header><div><p class="eyebrow">PRIVATE DOCUMENT SHARING</p><h1>TrustVault</h1></div><div id="identity" hidden></div></header>
-  <main>
-    <section id="login" class="panel narrow">
-      <h2>Sign in</h2><p class="muted">Access is checked for each document request.</p>
-      <form id="loginForm" class="auth-form"><label>Username<input name="username" autocomplete="username" maxlength="32" required></label><label>Password<input type="password" name="password" autocomplete="current-password" maxlength="256" required></label><button>Sign in</button></form>
-      <div id="authLinks" class="auth-links"><button id="showRegister" type="button" class="secondary">Create an account</button><button id="showReset" type="button" class="secondary">Forgot password?</button></div>
-      <form id="registerForm" class="auth-form" hidden><h3>Create a viewer account</h3><p class="muted">New accounts start as viewers and can access documents only when an owner grants access.</p><label>Username<input name="username" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}" required></label><label>Password<input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><label>Confirm password<input type="password" name="confirm_password" autocomplete="new-password" minlength="12" maxlength="256" required></label><button>Create account</button><button id="backToLoginFromRegister" type="button" class="secondary">Back to sign in</button></form>
-      <form id="resetForm" class="auth-form" hidden><h3>Reset password</h3><p class="muted">Enter the one-time recovery code you saved when you created your account or last changed its password. TrustVault does not email recovery links.</p><label>Username<input name="username" autocomplete="username" maxlength="32" required></label><label>Recovery code<input name="recovery_code" autocomplete="off" maxlength="128" required></label><label>New password<input type="password" name="new_password" autocomplete="new-password" minlength="12" maxlength="256" required></label><label>Confirm new password<input type="password" name="confirm_password" autocomplete="new-password" minlength="12" maxlength="256" required></label><button>Reset password</button><button id="backToLoginFromReset" type="button" class="secondary">Back to sign in</button></form>
-      <div id="recoveryBox" class="recovery-box" hidden><h3 id="recoveryTitle">Save your recovery code</h3><p class="muted">This code is shown once. Keep it somewhere private. It can reset this account's password and will be replaced after use.</p><p><code id="recoveryCode"></code></p><button id="copyRecovery" type="button" class="secondary">Copy recovery code</button><label class="check-label"><input id="recoverySaved" type="checkbox"> I have saved this code somewhere private.</label><button id="continueToLogin" type="button" disabled>Continue to sign in</button></div>
-    </section>
-    <div id="workspace" hidden>
-      <section class="panel toolbar"><div><h2>Your documents</h2><p class="muted">Only documents you own or were granted appear here.</p></div><button id="logout" class="secondary">Sign out</button></section>
-      <details class="panel"><summary><strong>Change password</strong></summary><p class="muted">Use your current password and choose at least 12 characters. Changing it signs out all active sessions, including this one.</p><form id="passwordForm" class="filters"><label>Current password<input name="current_password" type="password" autocomplete="current-password" maxlength="256" required></label><label>New password<input name="new_password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><label>Confirm new password<input name="confirm_password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><button>Update password</button></form></details>
-      <section id="uploadPanel" class="panel" hidden><h3>Upload document</h3><form id="uploadForm" class="inline"><label>File<input name="file" type="file" required></label><label>Category<input name="category" maxlength="80" value="uncategorized"></label><button>Upload</button></form></section>
-      <section class="panel"><form id="searchForm" class="filters"><label>Name<input name="name"></label><label>Owner<input name="owner"></label><label>Category<input name="category"></label><label>From<input name="from" type="date"></label><label>To<input name="to" type="date"></label><button>Search</button></form><div id="documents" class="documents"></div></section>
-      <section id="adminPanel" class="panel" hidden><div class="toolbar"><div><h3>Activity log</h3><p class="muted">Access decisions and permission changes.</p></div><button id="verify" class="secondary">Verify audit chain</button></div><pre id="audit"></pre></section>
-    </div>
-    <div id="notice" role="status" aria-live="polite"></div>
-  </main>
+  <section id="login" class="auth-shell">
+    <aside class="auth-aside">
+      <a class="brand brand-light" href="#"><span class="brand-mark">T</span><span>trustvault</span></a>
+      <div class="auth-message">
+        <span class="eyebrow">SECURE BY DESIGN</span>
+        <h1>Every document.<br>Exactly the right access.</h1>
+        <p>Protect sensitive files with precise, person-by-person permissions and a complete record of every decision.</p>
+        <div class="auth-proof"><span class="proof-icon">✓</span><span>Access checked on every request</span></div>
+        <div class="auth-proof"><span class="proof-icon">✓</span><span>Revocation takes effect on the next request</span></div>
+        <div class="auth-proof"><span class="proof-icon">✓</span><span>Verifiable, tamper-evident activity</span></div>
+      </div>
+      <div class="auth-aside-foot">TRUSTVAULT · PRIVATE DOCUMENT WORKSPACE</div>
+    </aside>
+
+    <main class="auth-main">
+      <div class="auth-card">
+        <div class="auth-mobile-brand brand"><span class="brand-mark">T</span><span>trustvault</span></div>
+        <div class="auth-heading">
+          <span class="eyebrow">WELCOME BACK</span>
+          <h2>Sign in to your workspace</h2>
+          <p>Use your TrustVault account to continue.</p>
+        </div>
+        <form id="loginForm" class="auth-form">
+          <label>Username<input name="username" autocomplete="username" maxlength="32" placeholder="Your username" required></label>
+          <label>Password<input type="password" name="password" autocomplete="current-password" maxlength="256" placeholder="Your password" required></label>
+          <button class="primary full" type="submit">Sign in <span aria-hidden="true">→</span></button>
+        </form>
+        <div id="authLinks" class="auth-links">
+          <button id="showRegister" type="button" class="text-button">Create a viewer account</button>
+          <button id="showReset" type="button" class="text-button">Forgot password?</button>
+        </div>
+        <form id="registerForm" class="auth-form" hidden>
+          <div class="auth-heading"><span class="eyebrow">GET STARTED</span><h2>Create your account</h2><p>New accounts start as viewers. An owner must grant document access.</p></div>
+          <label>Username<input name="username" autocomplete="username" minlength="3" maxlength="32" pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}" placeholder="Choose a username" required></label>
+          <label>Password<input type="password" name="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="At least 12 characters" required></label>
+          <label>Confirm password<input type="password" name="confirm_password" autocomplete="new-password" minlength="12" maxlength="256" required></label>
+          <button class="primary full" type="submit">Create account</button>
+          <button id="backToLoginFromRegister" type="button" class="text-button">Back to sign in</button>
+        </form>
+        <form id="resetForm" class="auth-form" hidden>
+          <div class="auth-heading"><span class="eyebrow">ACCOUNT RECOVERY</span><h2>Reset your password</h2><p>Use the one-time recovery code you saved. TrustVault does not email recovery links.</p></div>
+          <label>Username<input name="username" autocomplete="username" maxlength="32" required></label>
+          <label>Recovery code<input name="recovery_code" autocomplete="off" maxlength="128" required></label>
+          <label>New password<input type="password" name="new_password" autocomplete="new-password" minlength="12" maxlength="256" required></label>
+          <label>Confirm new password<input type="password" name="confirm_password" autocomplete="new-password" minlength="12" maxlength="256" required></label>
+          <button class="primary full" type="submit">Reset password</button>
+          <button id="backToLoginFromReset" type="button" class="text-button">Back to sign in</button>
+        </form>
+        <div id="recoveryBox" class="recovery-box" hidden>
+          <div class="recovery-symbol">⌑</div>
+          <h2 id="recoveryTitle">Save your recovery code</h2>
+          <p class="muted">This code is shown once. Keep it somewhere private. It can reset this account's password and will be replaced after use.</p>
+          <p><code id="recoveryCode"></code></p>
+          <button id="copyRecovery" type="button" class="secondary full">Copy recovery code</button>
+          <label class="check-label"><input id="recoverySaved" type="checkbox"> I have saved this code somewhere private.</label>
+          <button id="continueToLogin" type="button" class="primary full" disabled>Continue to sign in</button>
+        </div>
+        <p class="auth-legal">Protected access · Encrypted storage · Audit-ready activity</p>
+      </div>
+    </main>
+  </section>
+
+  <div id="workspace" class="app-shell" hidden>
+    <aside class="sidebar">
+      <a class="brand" href="#"><span class="brand-mark">T</span><span>trustvault</span></a>
+      <div class="workspace-switch"><span class="workspace-avatar">N</span><span><strong>Northstar Group</strong><small>Demo workspace</small></span><span class="chevron">⌄</span></div>
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="side-nav" aria-label="Workspace navigation">
+        <button type="button" class="nav-item active" data-view="overview"><span class="nav-icon">◫</span>Overview</button>
+        <button type="button" class="nav-item" data-view="documents"><span class="nav-icon">▤</span>All documents<span id="navDocCount" class="nav-count">0</span></button>
+        <button type="button" class="nav-item" data-view="shared"><span class="nav-icon">⇄</span>Shared with me</button>
+        <button type="button" id="settingsNavMobile" class="nav-item mobile-settings" data-view="settings"><span class="nav-icon">⚙</span>Settings</button>
+        <button type="button" class="nav-item" data-view="activity" id="activityNav" hidden><span class="nav-icon">◷</span>Audit activity</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="security-card"><span class="security-dot"></span><div><strong>Workspace protected</strong><small>Access controls active</small></div></div>
+        <button id="settingsNav" type="button" class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Account settings</button>
+        <div class="sidebar-user"><span id="userAvatar" class="user-avatar">U</span><span class="user-info"><strong id="userName">User</strong><small id="userRole">Viewer</small></span><button id="logout" type="button" class="icon-button" title="Sign out" aria-label="Sign out">↪</button></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>Northstar Group</span><span class="crumb-sep">/</span><strong id="pageCrumb">Overview</strong></div>
+        <div class="topbar-right"><span class="secure-label"><span class="security-dot"></span>Secure workspace</span><span id="topIdentity" class="top-identity"></span><button id="topLogout" type="button" class="icon-button mobile-logout" title="Sign out" aria-label="Sign out">↪</button></div>
+      </header>
+
+      <div class="page-content">
+        <section id="overviewView" class="view-section">
+          <div class="page-heading"><div><span class="eyebrow">WORKSPACE OVERVIEW</span><h1>Good to see you, <span id="greetingName">there</span></h1><p>Your secure document workspace at a glance.</p></div><button id="overviewUpload" type="button" class="primary" hidden><span class="plus">＋</span> Upload document</button></div>
+          <div class="stat-grid">
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Accessible documents</span><span class="stat-icon teal">▤</span></div><strong id="statAccessible">—</strong><span class="stat-note">Available to your account</span></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Documents I own</span><span class="stat-icon blue">◈</span></div><strong id="statOwned">—</strong><span class="stat-note">Managed by you</span></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Shared with me</span><span class="stat-icon violet">⇄</span></div><strong id="statShared">—</strong><span class="stat-note">Granted by document owners</span></article>
+            <article class="stat-card"><div class="stat-top"><span class="stat-label">Current access</span><span class="stat-icon green">✓</span></div><strong>Protected</strong><span class="stat-note">Verified on every request</span></article>
+          </div>
+          <div class="content-grid">
+            <section class="surface recent-surface"><div class="section-heading"><div><h2>Recent documents</h2><p>Latest files available to you</p></div><button type="button" class="link-button" data-goto="documents">View all <span>→</span></button></div><div id="recentDocuments" class="document-list"></div></section>
+            <aside class="surface posture-surface"><div class="section-heading"><div><h2>Security at a glance</h2><p>Your workspace safeguards</p></div><span class="status-pill"><i></i> Active</span></div>
+              <div class="security-list">
+                <div class="security-row"><span class="security-row-icon">⌑</span><div><strong>Per-document access</strong><small>Every file has its own permissions</small></div><span class="checkmark">✓</span></div>
+                <div class="security-row"><span class="security-row-icon">◷</span><div><strong>Audit trail</strong><small>Access and changes are recorded</small></div><span class="checkmark">✓</span></div>
+                <div class="security-row"><span class="security-row-icon">↻</span><div><strong>Immediate revocation</strong><small>Removed access stops working now</small></div><span class="checkmark">✓</span></div>
+              </div><div class="security-foot"><span>◈</span> Your files are encrypted at rest</div>
+            </aside>
+          </div>
+          <section id="adminPanel" class="surface admin-surface" hidden><div class="section-heading"><div><h2>Administrative activity</h2><p>Recent access decisions and permission changes</p></div><div class="button-group"><button id="verify" type="button" class="secondary compact">Verify audit chain</button><button type="button" class="link-button" data-goto="activity">Full activity <span>→</span></button></div></div><div id="auditPreview" class="activity-list"></div></section>
+        </section>
+
+        <section id="documentsView" class="view-section" hidden>
+          <div class="page-heading"><div><span class="eyebrow">DOCUMENT LIBRARY</span><h1>All documents</h1><p>Find and manage the files you own or have permission to access.</p></div><button id="uploadButton" type="button" class="primary" hidden><span class="plus">＋</span> Upload document</button></div>
+          <section id="uploadPanel" class="surface upload-panel" hidden>
+            <div class="upload-heading"><span class="upload-icon">↑</span><div><h2>Add a document</h2><p>Files are validated and encrypted when stored.</p></div></div>
+            <form id="uploadForm" class="upload-form"><label class="file-drop"><span class="file-symbol">＋</span><span><strong>Choose a file to upload</strong><small id="fileHint">PDF, TXT, CSV, PNG, JPG, DOCX or XLSX · up to 10 MiB</small></span><input name="file" type="file" accept=".pdf,.txt,.csv,.png,.jpg,.jpeg,.docx,.xlsx" required></label><label>Category<input name="category" maxlength="80" value="uncategorized" placeholder="e.g. Contracts"></label><button type="submit" class="primary">Upload securely</button></form>
+          </section>
+          <section class="surface library-surface">
+            <form id="searchForm" class="filters"><label class="search-field"><span>⌕</span><input name="name" placeholder="Search documents by name..."></label><label>Owner<input name="owner" placeholder="Any owner"></label><label>Category<input name="category" placeholder="Any category"></label><label>From<input name="from" type="date"></label><label>To<input name="to" type="date"></label><button type="submit" class="secondary compact">Filter</button><button id="clearFilters" type="button" class="text-button compact">Clear</button></form>
+            <div class="table-wrap"><table class="doc-table"><thead><tr><th>NAME</th><th>OWNER</th><th>CATEGORY</th><th>LAST UPDATED</th><th>ACCESS</th><th></th></tr></thead><tbody id="documents"></tbody></table></div>
+            <div id="emptyDocuments" class="empty-state" hidden><span class="empty-icon">▤</span><h3>No documents found</h3><p>Try changing your search or ask an owner to share a document with you.</p></div>
+          </section>
+        </section>
+
+        <section id="activityView" class="view-section" hidden>
+          <div class="page-heading"><div><span class="eyebrow">GOVERNANCE</span><h1>Audit activity</h1><p>Review recorded access decisions and document events.</p></div><button id="verifyActivity" type="button" class="secondary">Verify audit chain</button></div>
+          <section class="surface"><div class="section-heading"><div><h2>Recent events</h2><p>Latest administrative activity from the audit ledger</p></div><span class="status-pill"><i></i> Tamper-evident</span></div><div id="auditFull" class="activity-list"></div></section>
+        </section>
+
+        <section id="settingsView" class="view-section" hidden>
+          <div class="page-heading"><div><span class="eyebrow">PREFERENCES &amp; SECURITY</span><h1>Account settings</h1><p>Manage your sign-in credentials and recovery.</p></div></div>
+          <section class="surface settings-card"><div class="section-heading"><div><h2>Change password</h2><p>Choose at least 12 characters. This signs out all active sessions.</p></div><span class="stat-icon blue">⌑</span></div>
+            <form id="passwordForm" class="settings-form"><label>Current password<input name="current_password" type="password" autocomplete="current-password" maxlength="256" required></label><label>New password<input name="new_password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><label>Confirm new password<input name="confirm_password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required></label><button type="submit" class="primary">Update password</button></form>
+          </section>
+          <section class="surface settings-card"><div class="section-heading"><div><h2>Your access model</h2><p>TrustVault checks each document request against your current grant.</p></div></div><div class="security-list"><div class="security-row"><span class="security-row-icon">◉</span><div><strong id="settingsUsername">—</strong><small id="settingsRole">Account role</small></div></div><div class="security-row"><span class="security-row-icon">⌑</span><div><strong>Named-user permissions</strong><small>Document access is granted individually by an owner.</small></div></div></div></section>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="shareDialog" class="modal"><form id="shareForm" class="modal-card"><div class="modal-heading"><div><span class="eyebrow">DOCUMENT ACCESS</span><h2>Share document</h2><p id="shareDocumentName" class="muted"></p></div><button type="button" class="icon-button modal-close" data-close="shareDialog" aria-label="Close">×</button></div><label>Person<select id="shareUser" required></select></label><label>Permission<select id="sharePermission"><option value="read">Read · view and download</option><option value="edit">Edit · update metadata and replace file</option></select></label><div class="modal-actions"><button type="button" class="secondary" data-close="shareDialog">Cancel</button><button type="submit" class="primary">Grant access</button></div></form></dialog>
+  <dialog id="permissionsDialog" class="modal"><div class="modal-card"><div class="modal-heading"><div><span class="eyebrow">DOCUMENT ACCESS</span><h2>Manage access</h2><p id="permissionsDocumentName" class="muted"></p></div><button type="button" class="icon-button modal-close" data-close="permissionsDialog" aria-label="Close">×</button></div><div id="grantList" class="grant-list"></div><div class="modal-actions"><button type="button" class="secondary" data-close="permissionsDialog">Done</button></div></div></dialog>
+  <dialog id="editDialog" class="modal"><form id="editForm" class="modal-card"><div class="modal-heading"><div><span class="eyebrow">DOCUMENT DETAILS</span><h2>Edit document</h2></div><button type="button" class="icon-button modal-close" data-close="editDialog" aria-label="Close">×</button></div><label>Document name<input id="editName" maxlength="180" required></label><label>Category<input id="editCategory" maxlength="80" required></label><div class="modal-actions"><button type="button" class="secondary" data-close="editDialog">Cancel</button><button type="submit" class="primary">Save changes</button></div></form></dialog>
+  <div id="notice" role="status" aria-live="polite"></div>
 </body>
 </html>
