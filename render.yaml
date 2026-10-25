@@ -2,6 +2,7 @@ services:
   - type: web
     name: trustvault
     runtime: docker
+    # Free tier is for disposable judging/demo data only: local files are ephemeral.
     plan: free
     healthCheckPath: /api/health
     envVars:

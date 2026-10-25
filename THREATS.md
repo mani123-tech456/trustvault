@@ -6,6 +6,7 @@ This is a local prototype, not a security certification. The protected asset is 
 
 | Threat | Mitigation | Evidence |
 |---|---|---|
+| Cross-company or tenant boundary bypass | No tenant model exists. The demo branding represents a single shared workspace; all accounts can be offered to owners in its user directory. Run one isolated deployment per organization until tenant identity is enforced in every query and authorization predicate. | Accepted limitation; no multi-tenant test. |
 | Guessing a document UUID and requesting metadata/content directly | Every document route performs a current owner/grant lookup. Inaccessible and missing IDs return 404. No static files or direct file path endpoint. | `test_ungranted_user_cannot_list_read_download_change_or_delete_document`; `test_admin_has_no_implicit_document_access_and_anonymous_attempt_is_recorded` |
 | Listing/search endpoint leaks documents | SQL list predicate filters to owner or active grant before applying search filters, for every role. | Same isolation test (checks list) |
 | Read grant used to edit/replace/delete/share | Edit operations require `edit`; delete and permission administration require owner. | `test_read_grant_cannot_edit_but_edit_grant_can_change_metadata` |
@@ -36,7 +37,7 @@ Audit writes share a SQLite transaction with the relevant metadata/grant mutatio
 - The bearer token is returned to the caller; a stolen token works until logout/expiry. There is no refresh rotation, device/session page, or token binding.
 - SQLite and a local object directory assume one trusted host/one process. Production needs hardened hosting, TLS, a separate DB/object store, backup/restore tests, and coordinated key management.
 - No antivirus, macro inspection, MIME sniffing, ZIP/decompression limits, content disarm, or document preview isolation exists. Allowlisted suffixes alone do not establish file safety.
-- Audit rows do not capture source IP/user agent, and logging does not cover malformed JSON/validation failures consistently. The users directory is visible to any logged-in account. Rate limits and alerting are absent.
+- Audit rows do not capture source IP/user agent, and logging does not cover malformed JSON/validation failures consistently. The owner-only users directory is global to this single demo workspace. There is no company/tenant isolation. Rate limits and alerting are absent.
 - Soft-deleted content remains encrypted on disk indefinitely; retention, purge, legal hold, and recovery policies are unspecified.
 - The public Render free demo has ephemeral storage; it may lose database state, recovery-code hashes, and uploaded encrypted files on restart, idle spin-down, or redeploy. It is not appropriate for confidential documents. Signup and reset have no rate limits, so a public deployment could be abused for resource exhaustion. No independently reviewed production deployment or non-demo account provisioning exists.
 

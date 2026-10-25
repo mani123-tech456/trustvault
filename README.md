@@ -37,6 +37,11 @@ Anyone can create an account from the sign-in screen. Self-registration always c
 
 Every signed-in user can change their own password from the workspace. The endpoint requires the current password, applies a 12–256 byte new-password limit, records success or denial without storing password values in the audit, and revokes all of that user's active sessions. Sign in again after changing it.
 
+## Workspace interface
+
+The browser workspace is organized into Overview, All documents, Shared with me, Account settings, and an administrator-only Audit activity view. Owners can upload, search, edit, share, revoke, and delete their documents from the workspace. Viewers see only their owned or granted files. The Northstar Group name is fictional demo branding: this prototype has one shared user directory and does not implement company/tenant isolation. Do not use it for multiple companies or real confidential files.
+
+Uploads accept PDF, TXT, CSV, PNG, JPG/JPEG, DOCX, and XLSX up to 10 MiB. Files are encrypted at rest. File content is downloaded only through the authenticated document endpoint; the UI does not receive direct storage paths or signed URLs.
 ## Live demo
 
 Open [TrustVault on Render](https://trustvault-fodr.onrender.com). Use the demo accounts above. The service runs on Render's free tier and sleeps after inactivity, so its first request can take about a minute. Its filesystem is temporary: uploaded files and database changes can disappear when the service restarts, spins down or redeploys. This is a disposable judging demo only; do not upload real confidential documents.
