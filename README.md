@@ -33,6 +33,7 @@ These are public demo-only credentials. Never reuse them.
 - **Viewer:** access documents only through a current grant. Read permits metadata and download; edit also permits metadata changes and replacement.
 
 There is no folder inheritance, signed download URL, or cached authorization decision. Revocation takes effect on the next request.
+Anyone can create an account from the sign-in screen. Self-registration always creates a viewer; it never grants access to existing documents. On registration, TrustVault displays a random one-time recovery code. Save it privately: the database stores only its hash, and a successful reset invalidates all sessions and rotates the code. There is no email reset service. Existing seeded demo accounts have no recovery code until their password is changed while signed in.
 
 Every signed-in user can change their own password from the workspace. The endpoint requires the current password, applies a 12–256 byte new-password limit, records success or denial without storing password values in the audit, and revokes all of that user's active sessions. Sign in again after changing it.
 

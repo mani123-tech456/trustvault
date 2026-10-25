@@ -121,6 +121,52 @@ class TrustVaultTests(unittest.TestCase):
             if self.tokens["other"].get("token")==old_session["token"]:
                 self.login("other","Other-demo-4wN!")
 
+    def test_public_registration_creates_viewer_only_and_no_document_access(self):
+        doc=self.upload();username="new-"+app.uuid.uuid4().hex[:10];password="new-account-password-123"
+        try:
+            result=self.call("POST","/api/register",{"username":username,"password":password},auth=False,expected=201)
+            con=app.db();row=con.execute("SELECT id,role FROM users WHERE username=?",(username,)).fetchone();stored=con.execute("SELECT code_hash FROM recovery_codes WHERE user_id=?",(row["id"],)).fetchone();con.close()
+            self.assertEqual(row["role"],"viewer");self.assertNotEqual(stored["code_hash"],result["recovery_code"]);self.assertEqual(stored["code_hash"],app.recovery_hash(result["recovery_code"]))
+            signed=self.call("POST","/api/login",{"username":username,"password":password},auth=False,expected=200)
+            self.tokens[username]={"id":signed["user"]["id"],"token":signed["token"],"csrf":signed["csrf"]}
+            self.assertEqual(signed["user"]["role"],"viewer")
+            self.assertNotIn(doc,[r["id"] for r in self.call("GET","/api/documents",who=username)])
+            self.call("GET",f"/api/documents/{doc}/content",who=username,expected=404)
+            self.call("POST","/api/documents",who=username,raw=b"not allowed",headers={"X-File-Name":"x.txt"},expected=403)
+            duplicate=self.call("POST","/api/register",{"username":username,"password":password},auth=False,expected=400)
+            self.assertIn("error",duplicate)
+        finally:
+            con=app.db();uid=con.execute("SELECT id FROM users WHERE username=?",(username,)).fetchone()
+            if uid:
+                con.execute("DELETE FROM sessions WHERE user_id=?",(uid["id"],));con.execute("DELETE FROM recovery_codes WHERE user_id=?",(uid["id"],));con.execute("DELETE FROM grants WHERE user_id=? OR granted_by=?",(uid["id"],uid["id"]));con.execute("DELETE FROM users WHERE id=?",(uid["id"],));con.commit()
+            con.close();self.tokens.pop(username,None)
+
+    def test_recovery_code_is_single_use_rotated_and_revokes_all_sessions(self):
+        username="recover-"+app.uuid.uuid4().hex[:10];password="initial-account-password"
+        try:
+            registration=self.call("POST","/api/register",{"username":username,"password":password},auth=False,expected=201)
+            first_code=registration["recovery_code"]
+            first=self.call("POST","/api/login",{"username":username,"password":password},auth=False,expected=200)
+            second=self.call("POST","/api/login",{"username":username,"password":password},auth=False,expected=200)
+            self.tokens[username]={"id":second["user"]["id"],"token":second["token"],"csrf":second["csrf"]}
+            bad=self.call("POST","/api/password/reset",{"username":username,"recovery_code":"wrong-code","new_password":"replacement-password-123"},auth=False,expected=400)
+            self.assertEqual(bad["error"],"recovery request could not be completed")
+            changed=self.call("POST","/api/password/reset",{"username":username,"recovery_code":first_code,"new_password":"replacement-password-123"},auth=False,expected=200)
+            self.assertNotEqual(changed["recovery_code"],first_code)
+            self.call("GET","/api/me",headers={"Authorization":"Bearer "+first["token"]},auth=False,expected=401)
+            self.call("GET","/api/me",headers={"Authorization":"Bearer "+second["token"]},auth=False,expected=401)
+            self.call("POST","/api/login",{"username":username,"password":password},auth=False,expected=401)
+            self.call("POST","/api/password/reset",{"username":username,"recovery_code":first_code,"new_password":"another-new-password"},auth=False,expected=400)
+            logged=self.call("POST","/api/login",{"username":username,"password":"replacement-password-123"},auth=False,expected=200)
+            self.assertEqual(logged["user"]["role"],"viewer")
+            events=self.call("GET","/api/admin/activity",who="admin")
+            self.assertTrue(any(e["action"]=="password_reset" and e["outcome"]=="denied" for e in events))
+            self.assertTrue(any(e["action"]=="password_reset" and e["outcome"]=="allowed" for e in events))
+        finally:
+            con=app.db();uid=con.execute("SELECT id FROM users WHERE username=?",(username,)).fetchone()
+            if uid:
+                con.execute("DELETE FROM sessions WHERE user_id=?",(uid["id"],));con.execute("DELETE FROM recovery_codes WHERE user_id=?",(uid["id"],));con.execute("DELETE FROM grants WHERE user_id=? OR granted_by=?",(uid["id"],uid["id"]));con.execute("DELETE FROM users WHERE id=?",(uid["id"],));con.commit()
+            con.close();self.tokens.pop(username,None)
     def test_admin_audit_contains_refused_attempt_and_chain_verifies(self):
         doc=self.upload();self.call("GET",f"/api/documents/{doc}",who="other",expected=404)
         rows=self.call("GET","/api/admin/activity",who="admin")

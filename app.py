@@ -121,6 +121,24 @@ def password_hash(password: str, salt: bytes) -> bytes:
     return hashlib.scrypt(password.encode(), salt=salt, n=2**14, r=8, p=1)
 
 
+def recovery_code() -> str:
+    return secrets.token_urlsafe(24)
+
+
+def recovery_hash(code: str) -> str:
+    return hashlib.sha256(code.encode("utf-8")).hexdigest()
+
+
+def password_is_valid(value) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        size=len(value.encode("utf-8"))
+    except UnicodeError:
+        return False
+    return 12 <= size <= 256
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "TrustVault/0.1"
 
@@ -210,10 +228,51 @@ class Handler(BaseHTTPRequestHandler):
                     self.send_header("Cache-Control","no-store");self.send_header("X-Content-Type-Options","nosniff")
                     self.send_header("Content-Security-Policy","default-src 'self'; connect-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'")
                     self.end_headers();return self.wfile.write(content)
+                if path == "/api/register" and self.command == "POST":
+                    origin=self.headers.get("Origin")
+                    if origin and urlparse(origin).netloc != self.headers.get("Host"):
+                        audit(con,None,"registration",None,None,"denied","origin check failed")
+                        con.commit();return self.send_json(403,{"error":"request denied"})
+                    data=self.json_body()
+                    username=str(data.get("username","")).strip().lower()
+                    password=data.get("password")
+                    valid_username=bool(re.fullmatch(r"[a-z0-9][a-z0-9._-]{2,31}",username))
+                    if not valid_username or not password_is_valid(password) or con.execute("SELECT 1 FROM users WHERE username=?",(username,)).fetchone():
+                        audit(con,None,"registration",None,None,"denied","invalid account details or username unavailable")
+                        con.commit();return self.send_json(400,{"error":"could not create account; check username and password rules"})
+                    salt=secrets.token_bytes(16);user_id=str(uuid.uuid4());code=recovery_code()
+                    con.execute("INSERT INTO users(id,username,role,salt,password_hash,active) VALUES(?,?,?,?,?,1)",(user_id,username,"viewer",salt,password_hash(password,salt)))
+                    con.execute("INSERT INTO recovery_codes(user_id,code_hash,created_at) VALUES(?,?,?)",(user_id,recovery_hash(code),now()))
+                    audit(con,None,"registration",None,user_id,"allowed","viewer account created; one-time recovery code issued")
+                    con.commit();return self.send_json(201,{"ok":True,"username":username,"recovery_code":code})
+                if path == "/api/password/reset" and self.command == "POST":
+                    origin=self.headers.get("Origin")
+                    if origin and urlparse(origin).netloc != self.headers.get("Host"):
+                        audit(con,None,"password_reset",None,None,"denied","origin check failed")
+                        con.commit();return self.send_json(403,{"error":"recovery request could not be completed"})
+                    data=self.json_body();username=str(data.get("username","")).strip().lower()
+                    supplied=data.get("recovery_code");new=data.get("new_password")
+                    row=con.execute("SELECT u.id,u.active,rc.code_hash FROM users u LEFT JOIN recovery_codes rc ON rc.user_id=u.id WHERE u.username=?",(username,)).fetchone()
+                    code_text=supplied if isinstance(supplied,str) and len(supplied)<=128 else ""
+                    candidate=recovery_hash(code_text)
+                    expected=row["code_hash"] if row and row["code_hash"] else "0"*64
+                    code_ok=bool(row and row["active"] and row["code_hash"] and hmac.compare_digest(candidate,expected))
+                    if not code_ok or not password_is_valid(new):
+                        audit(con,None,"password_reset",None,row["id"] if row else None,"denied","recovery request could not be completed")
+                        con.commit();return self.send_json(400,{"error":"recovery request could not be completed"})
+                    salt=secrets.token_bytes(16);next_code=recovery_code()
+                    con.execute("UPDATE users SET salt=?,password_hash=? WHERE id=?",(salt,password_hash(new,salt),row["id"]))
+                    con.execute("DELETE FROM sessions WHERE user_id=?",(row["id"],))
+                    con.execute("UPDATE recovery_codes SET code_hash=?,created_at=? WHERE user_id=?",(recovery_hash(next_code),now(),row["id"]))
+                    audit(con,None,"password_reset",None,row["id"],"allowed","password reset; all sessions revoked; recovery code rotated")
+                    con.commit();return self.send_json(200,{"ok":True,"recovery_code":next_code})
                 if path == "/api/login" and self.command == "POST":
                     data = self.json_body()
-                    user = con.execute("SELECT * FROM users WHERE username=? AND active=1", (str(data.get("username","")),)).fetchone()
-                    password = str(data.get("password", ""))
+                    user = con.execute("SELECT * FROM users WHERE username=? AND active=1", (str(data.get("username"," ")).strip().lower(),)).fetchone()
+                    password_value=data.get("password", "")
+                    try: password_size=len(password_value.encode("utf-8")) if isinstance(password_value,str) else 257
+                    except UnicodeError: password_size=257
+                    password=password_value if password_size<=256 else ""
                     ok = bool(user) and hmac.compare_digest(password_hash(password, user["salt"]), user["password_hash"])
                     if not ok:
                         audit(con, user["id"] if user else None, "login", None, None, "denied", "invalid credentials")
@@ -236,16 +295,20 @@ class Handler(BaseHTTPRequestHandler):
                     current=data.get("current_password")
                     new=data.get("new_password")
                     valid_types=isinstance(current,str) and isinstance(new,str)
-                    valid_size=valid_types and len(current.encode("utf-8"))<=256 and 12<=len(new.encode("utf-8"))<=256
-                    matches=valid_types and len(current.encode("utf-8"))<=256 and hmac.compare_digest(password_hash(current,user["salt"]),user["password_hash"])
+                    try: current_size=len(current.encode("utf-8")) if valid_types else 257
+                    except UnicodeError: current_size=257
+                    valid_size=valid_types and current_size<=256 and password_is_valid(new)
+                    matches=valid_types and current_size<=256 and hmac.compare_digest(password_hash(current,user["salt"]),user["password_hash"])
                     if not matches or not valid_size:
                         audit(con,user["id"],"password_change",None,None,"denied","incorrect current password or new password outside 12-256 byte policy")
                         con.commit();return self.send_json(400,{"error":"current password incorrect or new password must be 12-256 bytes"})
                     salt=secrets.token_bytes(16)
                     con.execute("UPDATE users SET salt=?,password_hash=? WHERE id=?",(salt,password_hash(new,salt),user["id"]))
                     con.execute("DELETE FROM sessions WHERE user_id=?",(user["id"],))
-                    audit(con,user["id"],"password_change",None,None,"allowed","password changed; all sessions revoked")
-                    con.commit();return self.send_json(200,{"ok":True,"reauthentication_required":True})
+                    code=recovery_code()
+                    con.execute("INSERT INTO recovery_codes(user_id,code_hash,created_at) VALUES(?,?,?) ON CONFLICT(user_id) DO UPDATE SET code_hash=excluded.code_hash,created_at=excluded.created_at",(user["id"],recovery_hash(code),now()))
+                    audit(con,user["id"],"password_change",None,None,"allowed","password changed; all sessions revoked; recovery code rotated")
+                    con.commit();return self.send_json(200,{"ok":True,"reauthentication_required":True,"recovery_code":code})
                 if path == "/api/users" and self.command == "GET":
                     if user["role"]!="owner": return self.deny(con,user,"user_directory",None,"owner role required",403)
                     rows=con.execute("SELECT id,username,role FROM users WHERE active=1 ORDER BY username").fetchall()

@@ -1,14 +1,16 @@
 # TrustVault API
 
-All paths use JSON unless the endpoint accepts or returns raw document bytes. Login returns a bearer token valid for one hour. Every route except health and login requires `Authorization: Bearer <token>`. POST, PUT, and DELETE additionally require the login's `X-CSRF-Token`. Responses use `Cache-Control: no-store`. Missing/inaccessible document IDs return the same 404 response to reduce ID enumeration.
+All paths use JSON unless the endpoint accepts or returns raw document bytes. Login returns a bearer token valid for one hour. Every route except health, login, registration, and password reset requires `Authorization: Bearer <token>`. Authenticated POST, PUT, and DELETE additionally require the login's `X-CSRF-Token`. Public registration and reset check `Origin` when supplied and use no cookies. Responses use `Cache-Control: no-store`. Missing/inaccessible document IDs return the same 404 response to reduce ID enumeration.
 
 | Method / path | Allowed caller | Behavior |
 |---|---|---|
 | `GET /api/health` | Public | Liveness only; no account or document data. |
 | `POST /api/login` | Public | JSON `{ "username": "…", "password": "…" }`; returns token, CSRF token, role and user ID. Failed login is audited. |
+| `POST /api/register` | Public | JSON `{ "username": "…", "password": "…" }`; creates a viewer-only account (3–32 lowercase alphanumeric/dot/underscore/hyphen username; 12–256-byte password). Returns a one-time recovery code; only its SHA-256 hash is stored. It does not grant document access. Denials are audited. |
+| `POST /api/password/reset` | Public + one-time recovery code | JSON `{ "username": "…", "recovery_code": "…", "new_password": "…" }`; changes the password, revokes all sessions, consumes the old code and returns a replacement code. Invalid username/code/password requests use the same error. |
 | `POST /api/logout` | Any authenticated user + CSRF | Revokes the current bearer session. |
 | `GET /api/me` | Any authenticated user | Current account identity and role. |
-| `POST /api/password` | Any authenticated user + CSRF | JSON `{ "current_password": "…", "new_password": "…" }`; requires the current password and a new password of 12–256 UTF-8 bytes. Changes the hash, audits the result without recording secrets, and revokes every active session for that account. Sign in again afterward. |
+| `POST /api/password` | Any authenticated user + CSRF | JSON `{ "current_password": "…", "new_password": "…" }`; requires the current password and a new password of 12–256 UTF-8 bytes. Changes the hash, audits the result without recording secrets, revokes every active session, and rotates the recovery code. Sign in again after saving the returned code. |
 | `GET /api/users` | Owner | Active user IDs, names and roles for explicit sharing. |
 | `GET /api/documents?name=&owner=&category=&from=YYYY-MM-DD&to=YYYY-MM-DD` | Any authenticated user | Current user's owned and explicitly granted documents only; max 200. Search terms are parameterized and `%`/`_` are escaped. |
 | `POST /api/documents` | Owner role + CSRF | Raw file bytes; `X-File-Name` and optional `X-Category`; up to 10 MiB. Creates owner-only document. |

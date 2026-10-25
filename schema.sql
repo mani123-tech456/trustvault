@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS sessions (
   csrf TEXT NOT NULL,
   expires INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS recovery_codes (
+  user_id TEXT PRIMARY KEY NOT NULL REFERENCES users(id),
+  code_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
